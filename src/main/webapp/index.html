@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Test Microservicio</title>
+    <style>
+        body { font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; }
+        .meta { margin: 0 0 12px 0; color: #666; font-size: 12px; }
+        .error { padding: 10px 12px; border: 1px solid #f5c2c7; background: #f8d7da; color: #842029; border-radius: 6px; }
+        .empty { padding: 10px 12px; border: 1px solid #d3d3d3; background: #f7f7f7; color: #333; border-radius: 6px; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #e5e5e5; padding: 8px; vertical-align: top; }
+        th { background: #f3f5f7; text-align: left; position: sticky; top: 0; z-index: 1; }
+        td.num { text-align: right; white-space: nowrap; }
+        td.date { white-space: nowrap; }
+        td.wrap { word-break: break-word; }
+    </style>
+    <script src="wasm/testmicroservicio.wasm-runtime.js"></script>
+    <script src="wasm/wasm-api.js"></script>
+</head>
+<body>
+
+<h1>Microservicio</h1>
+
+<h1> Lista de Proyectos </h1>
+
+<label for="filas">Seleccione el número de registros:</label>
+<select id="filas">
+    <option value="10" selected>10</option>
+    <option value="20">20</option>
+    <option value="50">50</option>
+    <option value="100">100</option>
+    <option value="200">200</option>
+    <option value="400">400</option>
+</select>
+<div id="table-container" style="border: 1px solid #ccc; padding: 20px; min-height: 50px; border-radius:5px;">
+    <em>Cargando módulo WASM...</em>
+</div>
+
+<script>
+    // 1. Iniciamos la API al cargar la página
+        window.onload = async () => {
+        await WasmAPI.init('wasm/testmicroservicio.wasm');
+        var htmlResult = await WasmAPI.getHTML('10');
+        document.getElementById('table-container').innerHTML = htmlResult;
+        document.getElementById('filas').onchange = function (event) {
+            var rows = document.getElementById('filas').value;
+            document.getElementById('table-container').innerHTML ="<em>Cargando proyectos...</em>";
+            WasmAPI.getHTML(rows).then(function(htmlResultUpdate) {
+                document.getElementById('table-container').innerHTML = htmlResultUpdate;
+            });
+        }
+    }
+</script>
+
+</body>
+</html>

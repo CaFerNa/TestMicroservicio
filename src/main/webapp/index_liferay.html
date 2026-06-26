@@ -1,0 +1,62 @@
+<#-- 1. Liferay obtiene el XML desde el servidor (SIN CORS) -->
+<#assign urlCSIC = "https://csic.es" />
+<#attempt>
+    <#assign xmlData = httpUtil.get(urlCSIC) />
+<#recover>
+    <#assign xmlData = "error" />
+</#attempt>
+
+<#-- 2. El XML se inyecta en un campo oculto que el JS pueda leer -->
+<div id="xml-data-source" style="display:none;">${xmlData}</div>
+
+<#-- 3. Tu estructura de HTML (estilos incluidos) -->
+<style>
+    /* ... (Tus estilos CSS tal cual los tienes) ... */
+    .error-liferay { padding: 10px; background: #f8d7da; color: #842029; }
+</style>
+
+<h1>Microservicio (Rendered with WebAssembly)</h1>
+<h1>Project List</h1>
+
+<div id="table-container">
+    <em>Cargando módulo WASM...</em>
+</div>
+
+<#-- 4. Importante: Ajusta las rutas a tus archivos .js y .wasm -->
+<#-- Si están en el mismo WAR, usa la ruta completa del contexto -->
+<script src="/o/tu-contexto/wasm/testmicroservicio.wasm-runtime.js"></script>
+<script src="/o/tu-contexto/wasm/wasm-api.js"></script>
+
+<script>
+    window.onload = async () => {
+        try {
+            // Leemos el XML que Liferay ya dejó en el HTML
+            const rawXml = document.getElementById('xml-data-source').innerHTML;
+
+            if (rawXml === "error" || rawXml.trim() === "") {
+                document.getElementById('table-container').innerHTML = "<div class='error'>Error al obtener datos del CSIC desde el servidor.</div>";
+                return;
+            }
+
+            // Inicializamos tu WASM
+            // Asegúrate de que la ruta al .wasm sea accesible (ej: /o/tu-contexto/wasm/...)
+            await WasmAPI.init('/o/tu-contexto/wasm/testmicroservicio.wasm');
+
+            /* 
+               OJO: Aquí viene el cambio clave. 
+               Tu WasmAPI.getHTML() probablemente hacía el fetch interno.
+               Tendrás que modificar tu JS para que acepte el XML que ya tenemos, 
+               o que el WASM lo tome de una variable global.
+            */
+            
+            // Ejemplo si tu API permite pasarle el XML directamente:
+            // document.getElementById('table-container').innerHTML = WasmAPI.renderWithData(rawXml);
+            
+            document.getElementById('table-container').innerHTML = WasmAPI.getHTML();
+            
+        } catch (e) {
+            console.error(e);
+            document.getElementById('table-container').innerHTML = "<div class='error'>Error al cargar WASM: " + e.message + "</div>";
+        }
+    }
+</script>
